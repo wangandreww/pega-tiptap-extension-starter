@@ -113,6 +113,84 @@ Try the extensions:
 4. Register on `pega.u.d.customTiptapExtensions[name] = yourExtension`.
 5. Run `npm run build` and redeploy.
 
+## Adding an npm-based extension
+
+Full walkthrough using `@tiptap/extension-placeholder` (shows placeholder text
+when the editor is empty) as an example.
+
+### 1. Install the package
+
+```bash
+npm install @tiptap/extension-placeholder
+```
+
+### 2. Decide: bundle it, or externalize it?
+
+Check whether Pega's `TiptapBundle` already exports this package (see the
+Pega documentation topic *"Adding an external extension to the Rich text
+editor"* for the current export list — includes `StarterKit`, `Link`,
+`Image`, `Table`, `TextAlign`, `Underline`, etc.).
+
+- **Already in `TiptapBundle`?** — Add an entry to `externals` in
+  [`webpack.config.js`](./webpack.config.js). Your build output stays tiny
+  and shares Pega's copy at runtime:
+  ```js
+  externals: {
+    '@tiptap/extension-somename': ['TiptapBundle', 'SomeName'],
+    // ...
+  }
+  ```
+- **Not in `TiptapBundle`?** — Do nothing. Webpack will bundle the package
+  into your output file. That's the case for `@tiptap/extension-placeholder`.
+
+### 3. Import and register in `src/extension.js`
+
+```js
+import Placeholder from '@tiptap/extension-placeholder';
+
+// ...existing extensions...
+
+window.pega.u.d.customTiptapExtensions['acme.placeholder'] = Placeholder.configure({
+  placeholder: 'Start typing here…',
+});
+```
+
+### 4. Build
+
+```bash
+npm run build
+```
+
+Produces a fresh `dist/my-extension.js` with the placeholder code bundled in.
+
+### 5. Redeploy
+
+Re-upload `dist/my-extension.js` to your existing Text File rule in Pega and
+clear the static content cache. No harness changes needed — the same file is
+already attached.
+
+### 6. Verify
+
+Open a page with the RTE. Empty editors should now show "Start typing here…"
+as a hint. In DevTools:
+
+```js
+Object.keys(pega.u.d.customTiptapExtensions);
+// → [..., "acme.placeholder"]
+```
+
+### Gotchas
+
+- **CommonJS-only packages** — some older packages don't ship ES modules
+  cleanly. If the build errors with `Foo is not a constructor`, try
+  `const Foo = require('foo').default;` instead of `import Foo from 'foo'`.
+- **Peer dependency warnings** — many Tiptap extensions declare
+  `@tiptap/core` as a peer. `npm install` may warn about unmet peers; this
+  is fine because `@tiptap/core` is a direct dependency of this starter.
+- **Bundle size** — every package you bundle (Case B in step 2) adds to
+  the output file. Prefer externalizing whenever Pega's `TiptapBundle`
+  already ships the package.
+
 ## Constraints (from Pega's documentation)
 
 - Extensions must use the Tiptap v2 API (`Extension.create`, `Node.create`,
