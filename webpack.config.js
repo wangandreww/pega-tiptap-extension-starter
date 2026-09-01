@@ -29,7 +29,13 @@ module.exports = {
     // something the bundle DOESN'T export, the runtime lookup returns undefined
     // and your extension will silently break. When in doubt, leave a package
     // out of this map — Webpack will bundle it into your output instead.
-    '@tiptap/core':                          ['TiptapBundle', 'Extension'],
+    // @tiptap/core has multiple named exports (Extension, Node, Mark, ...).
+    // Map the whole module to `TiptapBundle` — then a named import like
+    // `import { Extension } from '@tiptap/core'` compiles to `TiptapBundle.Extension`.
+    // (Do NOT use ['TiptapBundle', 'Extension'] — that maps the entire module
+    // to the Extension class, so `Extension` from it becomes
+    // `TiptapBundle.Extension.Extension`, which is undefined at runtime.)
+    '@tiptap/core':                          'TiptapBundle',
     '@tiptap/starter-kit':                   ['TiptapBundle', 'StarterKit'],
     '@tiptap/extension-image':               ['TiptapBundle', 'Image'],
     '@tiptap/extension-link':                ['TiptapBundle', 'Link'],
