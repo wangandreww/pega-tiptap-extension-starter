@@ -113,6 +113,35 @@ Try the extensions:
 4. Register on `pega.u.d.customTiptapExtensions[name] = yourExtension`.
 5. Run `npm run build` and redeploy.
 
+## Version compatibility (IMPORTANT)
+
+Pega's traditional-UI Rich Text Editor is built on **Tiptap 2.x**
+(currently 2.1.13). Every Tiptap extension you install **must be a v2
+release** — Tiptap v3 is a breaking major and its extensions will fail
+silently against Pega's runtime.
+
+**The trap:** running `npm install @tiptap/extension-<name>` without a
+version specifier installs the *latest* version, which today is v3.x.
+Always pin to v2:
+
+```bash
+# Recommended — always append @^2
+npm install @tiptap/extension-mention@^2
+
+# Or, closer to Pega's exact bundled version
+npm install @tiptap/extension-mention@~2.1.13
+```
+
+This starter's `package.json` includes an `overrides` block that pins
+every well-known `@tiptap/*` package to `^2.1.13`. That protects you
+against *transitive* v3 pulls (a package you install depending on a v3
+`@tiptap/core`, for example), but it does **not** override the version
+of a package you install directly. Always use `@^2` on the install
+command.
+
+Non-Tiptap packages (tippy.js, popper, mammoth.js, etc.) have their own
+versioning and are not constrained by this.
+
 ## Adding an npm-based extension
 
 Full walkthrough using `@tiptap/extension-placeholder` (shows placeholder text
