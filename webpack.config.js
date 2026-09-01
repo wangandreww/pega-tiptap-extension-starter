@@ -23,30 +23,29 @@ module.exports = {
     },
   },
   externals: {
-    '@tiptap/core':                     ['TiptapBundle', 'Extension'],
-    '@tiptap/starter-kit':              ['TiptapBundle', 'StarterKit'],
-    '@tiptap/extension-heading':        ['TiptapBundle', 'Heading'],
-    '@tiptap/extension-paragraph':      ['TiptapBundle', 'Paragraph'],
-    '@tiptap/extension-image':          ['TiptapBundle', 'Image'],
-    '@tiptap/extension-link':           ['TiptapBundle', 'Link'],
-    '@tiptap/extension-table':          ['TiptapBundle', 'Table'],
-    '@tiptap/extension-table-row':      ['TiptapBundle', 'TableRow'],
-    '@tiptap/extension-table-cell':     ['TiptapBundle', 'TableCell'],
-    '@tiptap/extension-table-header':   ['TiptapBundle', 'TableHeader'],
+    // Only externalize packages that Pega's TiptapBundle actually exports.
+    // These map an ES-module import in your source to a runtime lookup on the
+    // TiptapBundle global that pztiptap_bundle.js defines. If you externalize
+    // something the bundle DOESN'T export, the runtime lookup returns undefined
+    // and your extension will silently break. When in doubt, leave a package
+    // out of this map — Webpack will bundle it into your output instead.
+    '@tiptap/core':                          ['TiptapBundle', 'Extension'],
+    '@tiptap/starter-kit':                   ['TiptapBundle', 'StarterKit'],
+    '@tiptap/extension-image':               ['TiptapBundle', 'Image'],
+    '@tiptap/extension-link':                ['TiptapBundle', 'Link'],
+    '@tiptap/extension-table':               ['TiptapBundle', 'Table'],
+    '@tiptap/extension-table-row':           ['TiptapBundle', 'TableRow'],
+    '@tiptap/extension-table-cell':          ['TiptapBundle', 'TableCell'],
+    '@tiptap/extension-table-header':        ['TiptapBundle', 'TableHeader'],
     '@tiptap/extension-code-block-lowlight': ['TiptapBundle', 'CodeBlockLowlight'],
-    '@tiptap/extension-text-align':     ['TiptapBundle', 'TextAlign'],
-    '@tiptap/extension-underline':      ['TiptapBundle', 'Underline'],
-    '@tiptap/extension-color':          ['TiptapBundle', 'Color'],
-    '@tiptap/extension-text-style':     ['TiptapBundle', 'TextStyle'],
-    '@tiptap/extension-highlight':      ['TiptapBundle', 'Highlight'],
-    '@tiptap/extension-subscript':      ['TiptapBundle', 'Subscript'],
-    '@tiptap/extension-superscript':    ['TiptapBundle', 'Superscript'],
-    '@tiptap/extension-font-family':    ['TiptapBundle', 'FontFamily'],
-    '@tiptap/extension-mention':        ['TiptapBundle', 'Mention'],
-    'prosemirror-state':                ['TiptapBundle', 'ProseMirrorState'],
-    'prosemirror-view':                 ['TiptapBundle', 'ProseMirrorView'],
-    'prosemirror-model':                ['TiptapBundle', 'ProseMirrorModel'],
-    'prosemirror-transform':            ['TiptapBundle', 'ProseMirrorTransform'],
+    '@tiptap/extension-text-align':          ['TiptapBundle', 'TextAlign'],
+    '@tiptap/extension-underline':           ['TiptapBundle', 'Underline'],
+    '@tiptap/extension-color':               ['TiptapBundle', 'Color'],
+    '@tiptap/extension-text-style':          ['TiptapBundle', 'TextStyle'],
+    '@tiptap/extension-highlight':           ['TiptapBundle', 'Highlight'],
+    '@tiptap/extension-subscript':           ['TiptapBundle', 'Subscript'],
+    '@tiptap/extension-superscript':         ['TiptapBundle', 'Superscript'],
+    '@tiptap/extension-font-family':         ['TiptapBundle', 'FontFamily'],
   },
   module: {
     rules: [
