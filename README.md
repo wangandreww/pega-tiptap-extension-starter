@@ -6,11 +6,21 @@ Editor (Infinity 26+).
 Use this if your extension pulls in npm dependencies and needs to be
 pre-bundled to a browser-compatible UMD/IIFE file before uploading to Pega.
 
-> If your extension is behavior-only and doesn't need npm packages, you don't
-> need this starter — you can write the extension directly as a Text File rule
-> in Pega using `TiptapBundle.Extension.create` / `TiptapBundle.Node.create`.
-> See the Pega documentation topic *"Adding an external extension to the Rich
-> text editor."*
+> **You only need this starter if your extension requires npm packages.** The
+> starter's purpose is Webpack build tooling that bundles npm dependencies and
+> maps their imports to Pega's `TiptapBundle` global at runtime.
+>
+> For behavior-only extensions using just `TiptapBundle.Extension.create` /
+> `TiptapBundle.Node.create`, no build tooling is needed — write the code
+> directly as a Pega Text File rule. See the Pega documentation topic
+> *"Adding an external extension to the Rich text editor."*
+
+## Compatibility
+
+- **Target UI stack:** Pega Traditional UI (not Constellation)
+- **Target Platform:** Pega Infinity 26 and later
+- **Tiptap version:** 2.1.13 (bundled by Pega)
+- **DOMPurify version:** 3.4.x
 
 ## Prerequisites
 
@@ -33,7 +43,7 @@ That produces `dist/my-extension.js` — the file you upload to Pega.
 
 | File | Purpose |
 |------|---------|
-| `src/extension.js`      | Your extension code. Ships with two example extensions (keyboard shortcut + callout node). |
+| `src/extension.js`      | Your extension code. Ships with four examples: a keyboard shortcut, a custom node (callout box), a style-only page-view extension, and a custom toolbar button. |
 | `webpack.config.js`     | Webpack config with `TiptapBundle` externals pre-wired. **Do not remove the externals block** — it's what makes Pega compatibility work. |
 | `package.json`          | Dependencies. Add more Tiptap extensions as needed with `npm install @tiptap/extension-<name>`. |
 | `dist/my-extension.js`  | Build output (gitignored). Upload this to Pega. |
@@ -227,11 +237,78 @@ Object.keys(pega.u.d.customTiptapExtensions);
 - Delivered as browser-compatible JavaScript (UMD or IIFE). ES module
   `import`/`export` is not supported at runtime — Webpack handles this
   conversion for you.
-- The built-in RTE toolbar does not expose a plug-in point for custom
-  buttons. If your extension needs a UI affordance, render it from within the
-  extension itself (bubble menu, floating menu, or slash command).
 - If your extension outputs custom HTML tags/attributes, add them to
   `pega.u.d.rteCustomAllowedTags` so DOMPurify doesn't strip them.
+
+## Adding a custom toolbar button
+
+Custom toolbar buttons are registered via a separate registry from custom
+extensions: `pega.u.d.customTiptapToolbarButtons`. Registered buttons appear
+at the end of the RTE toolbar in a "custom" group, separated by a divider
+from the built-in buttons.
+
+### Contract
+
+```js
+pega.u.d.customTiptapToolbarButtons = pega.u.d.customTiptapToolbarButtons || {};
+
+pega.u.d.customTiptapToolbarButtons['acme.sayHello'] = {
+  label: 'Say Hello',                         // required — tooltip and aria-label
+  icon: '<svg viewBox="0 0 24 24">...</svg>', // required — inline SVG or webwb/foo.svg URL
+  onClick: (editor, buttonEl) => {            // required — fires on click
+    alert('HELLO!');
+  },
+};
+```
+
+### Rules and guarantees
+
+- **Namespace required.** Button IDs must contain a `.` (e.g.
+  `"acme.sayHello"`, not `"sayHello"`). Non-namespaced IDs are rejected with
+  a console warning to prevent collisions with Pega's built-in button IDs.
+- **Icons are sanitized.** Inline SVG icons pass through the RTE's DOMPurify
+  configuration — event handlers and script content are stripped. URL icons
+  are restricted to relative paths, `http(s)`, and `data:image/*` URIs;
+  `javascript:` and `vbscript:` are rejected.
+- **Always enabled.** There is no `isEnabled` contract in the v1 API. If
+  your button should no-op under certain conditions (e.g., no text selected),
+  guard inside `onClick`: `if (editor.state.selection.empty) return;`.
+- **No API for adding buttons between built-ins.** All custom buttons render
+  at the end of the toolbar. Ordering within the custom group follows the
+  order entries are added to the registry.
+- **Registration timing.** Register at page-parse time (inside your
+  extension file's top-level IIFE). Buttons registered after `new Editor()`
+  fires do not appear on that editor instance.
+
+### Example — inline SVG icon
+
+```js
+pega.u.d.customTiptapToolbarButtons['acme.uppercase'] = {
+  label: 'Uppercase selection',
+  icon: '<svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zM12 3L4 17h2.5l1.5-4h8l1.5 4H20L12 3z"/></svg>',
+  onClick: (editor) => {
+    const { from, to } = editor.state.selection;
+    if (from === to) return;
+    const text = editor.state.doc.textBetween(from, to, ' ');
+    editor.chain().focus().insertContentAt({ from, to }, text.toUpperCase()).run();
+  },
+};
+```
+
+### Example — icon hosted as a Pega Text File / Binary File rule
+
+Upload your icon as a Binary File rule (App name `webwb`, extension `svg`
+or `png`), then reference it by relative path:
+
+```js
+pega.u.d.customTiptapToolbarButtons['acme.wordImport'] = {
+  label: 'Upload Word document',
+  icon: 'webwb/word_icon.svg',
+  onClick: async (editor) => {
+    // ... open file picker, convert with mammoth, insert HTML ...
+  },
+};
+```
 
 ## Troubleshooting
 
@@ -261,4 +338,4 @@ docs.
 
 ## License
 
-Provided as-is under the Apache 2.0 License. See LICENSE for details.
+Apache License 2.0. See [LICENSE](./LICENSE) for the full text.
